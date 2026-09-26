@@ -30,6 +30,7 @@ from app.models.incident import Incident
 from app.models.risk import RiskAssessment, RiskPriority
 from app.models.triage import TriagedIncident
 from app.services.correlation import correlate_alerts
+from app.services.mitre import build_mitre_context
 from app.services.risk import assess_risk
 
 # ---------------------------------------------------------------------------
@@ -56,9 +57,14 @@ def _collect_incident_alerts(
     return [alert_map[aid] for aid in incident.alert_ids if aid in alert_map]
 
 
-def _merge(incident: Incident, assessment: RiskAssessment) -> TriagedIncident:
-    """Flatten an Incident + RiskAssessment into a single TriagedIncident."""
+def _merge(
+    incident: Incident,
+    assessment: RiskAssessment,
+    incident_alerts: list[Alert],
+) -> TriagedIncident:
+    """Flatten an Incident + RiskAssessment + MITRE context into a single TriagedIncident."""
     c = assessment.components
+    mitre_context = build_mitre_context(incident_alerts)
     return TriagedIncident(
         # -- Incident fields --
         incident_id=incident.incident_id,
@@ -76,6 +82,8 @@ def _merge(incident: Incident, assessment: RiskAssessment) -> TriagedIncident:
         evidence_strength_score=c.evidence_strength,
         attack_context_score=c.attack_context,
         explanation=assessment.explanation,
+        # -- MITRE ATT&CK context (Task 8) --
+        mitre_context=mitre_context,
     )
 
 
@@ -134,7 +142,7 @@ def run_triage(alerts: list[Alert]) -> list[TriagedIncident]:
     for incident in incidents:
         incident_alerts = _collect_incident_alerts(incident, alert_map)
         assessment: RiskAssessment = assess_risk(incident, incident_alerts)
-        triaged.append(_merge(incident, assessment))
+        triaged.append(_merge(incident, assessment, incident_alerts))
 
     # Stage 4: sort by deterministic priority key
     triaged.sort(key=_sort_key)

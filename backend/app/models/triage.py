@@ -18,6 +18,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.models.incident import CorrelationEdge
+from app.models.mitre import IncidentMITREContext
 from app.models.risk import RiskPriority
 
 
@@ -64,3 +65,6 @@ class TriagedIncident(BaseModel):
     evidence_strength_score:     float
     attack_context_score:        float
     explanation:                 str
+
+    # -- Security context (Task 8) --
+    mitre_context:               IncidentMITREContext
