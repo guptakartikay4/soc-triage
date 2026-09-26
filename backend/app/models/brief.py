@@ -32,6 +32,8 @@ class IncidentBrief(BaseModel):
     mitre_summary: list[str] = Field(default_factory=list)
     recommended_next_steps: list[str] = Field(default_factory=list)
     confidence: Literal["High", "Medium", "Low"]
+    generation_source: str = "deterministic_fallback"
+    is_fallback: bool = True
 
     @field_validator("confidence", mode="before")
     @classmethod

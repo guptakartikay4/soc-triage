@@ -306,8 +306,10 @@ def generate_incident_brief(
 
         # 4. Validate output with Pydantic
         parsed_json = json.loads(response_text)
-        # Ensure incident_id matches
+        # Ensure incident_id matches and record source
         parsed_json["incident_id"] = triaged_incident.incident_id
+        parsed_json["generation_source"] = "groq"
+        parsed_json["is_fallback"] = False
         return IncidentBrief.model_validate(parsed_json)
 
     except Exception as exc:
